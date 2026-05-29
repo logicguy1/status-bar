@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 User=pi
 WorkingDirectory=/home/pi/status-bar
-ExecStart=/usr/bin/python3 main.py
+ExecStart=/home/pi/status-bar/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
 Environment=DISPLAY=:0

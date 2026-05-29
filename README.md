@@ -21,8 +21,12 @@ Fullscreen Pygame display for a Raspberry Pi 7" monitor. Shows clock, weather, a
 ### 1. Install dependencies
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+> If `pip install` fails with "externally managed environment", the venv above fixes it.
 
 ### 2. Configure
 
@@ -48,6 +52,7 @@ Edit `config.json`:
 ### 4. Run
 
 ```bash
+source .venv/bin/activate
 python main.py
 ```
 
