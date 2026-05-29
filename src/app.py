@@ -1,3 +1,4 @@
+import os
 import pygame
 from src.colors import BG, DIVIDER
 from src.fonts import FontManager
@@ -15,6 +16,7 @@ class App:
         self._fullscreen  = config.get("fullscreen", False)
 
     def run(self) -> None:
+        os.environ.setdefault("SDL_VIDEO_X11_XRANDR", "0")
         pygame.init()
 
         w = self._config["display_width"]
