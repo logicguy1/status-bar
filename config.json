@@ -1,0 +1,10 @@
+{
+  "location": "Copenhagen",
+  "display_width": 800,
+  "display_height": 480,
+  "fullscreen": false,
+  "left_column_ratio": 0.45,
+  "weather_refresh_seconds": 600,
+  "calendar_refresh_seconds": 300,
+  "max_events_per_day": 5
+}

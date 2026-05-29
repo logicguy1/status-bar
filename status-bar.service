@@ -1,0 +1,16 @@
+[Unit]
+Description=Status Bar Display
+After=network-online.target graphical.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/status-bar
+ExecStart=/usr/bin/python3 main.py
+Restart=on-failure
+RestartSec=5
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+
+[Install]
+WantedBy=graphical.target
