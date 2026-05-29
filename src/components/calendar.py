@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta
 import pygame
 from src.components.base import Component
-from src.colors import TEXT, DIM, ACCENT, DIVIDER
+from src.colors import TEXT, DIM, ACCENT, DIVIDER, ACTIVE, WARN
 from src.config import ROOT
 
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
@@ -15,6 +15,18 @@ def _truncate(font: pygame.font.Font, text: str, max_width: int) -> str:
     while len(text) > 1 and font.size(text + "…")[0] > max_width:
         text = text[:-1]
     return text + "…"
+
+
+def _event_color(event: dict, now: datetime) -> tuple:
+    if event.get("all_day"):
+        return ACTIVE
+    start = event.get("start_dt")
+    end   = event.get("end_dt")
+    if start and end and start <= now <= end:
+        return ACTIVE
+    if start and timedelta(0) < (start - now) <= timedelta(hours=1):
+        return WARN
+    return TEXT
 
 
 class CalendarComponent(Component):
@@ -69,15 +81,28 @@ class CalendarComponent(Component):
 
             for event in result.get("items", []):
                 start = event["start"]
+                end   = event.get("end", {})
+
                 if "dateTime" in start:
-                    dt         = datetime.fromisoformat(start["dateTime"])
-                    event_date = dt.date()
-                    time_str   = dt.strftime("%H:%M")
+                    start_dt   = datetime.fromisoformat(start["dateTime"])
+                    end_dt     = datetime.fromisoformat(end["dateTime"]) if "dateTime" in end else None
+                    event_date = start_dt.date()
+                    time_str   = start_dt.strftime("%H:%M")
+                    all_day    = False
                 else:
+                    start_dt   = None
+                    end_dt     = None
                     event_date = datetime.fromisoformat(start["date"]).date()
                     time_str   = "All day"
+                    all_day    = True
 
-                entry = {"time": time_str, "title": event.get("summary", "(No title)")}
+                entry = {
+                    "time":     time_str,
+                    "title":    event.get("summary", "(No title)"),
+                    "start_dt": start_dt,
+                    "end_dt":   end_dt,
+                    "all_day":  all_day,
+                }
                 if event_date == today_date:
                     today.append(entry)
                 elif event_date == tomorrow_date:
@@ -96,11 +121,12 @@ class CalendarComponent(Component):
                 self._error = str(e)[:60]
 
     def draw(self, surface: pygame.Surface, rect: pygame.Rect, fonts: dict) -> None:
-        pad      = max(16, int(rect.height * 0.05))
-        x        = rect.left + pad
-        y        = rect.top + int(rect.height * 0.06)
-        time_col = fonts["cal_event"].size("00:00")[0] + int(rect.height * 0.02)
+        pad       = max(16, int(rect.height * 0.05))
+        x         = rect.left + pad
+        y         = rect.top + int(rect.height * 0.06)
+        time_col  = fonts["cal_event"].size("00:00")[0] + int(rect.height * 0.02)
         max_title = rect.width - pad - 8 - time_col - 10
+        now       = datetime.now().astimezone()
 
         with self._lock:
             today    = list(self._today)
@@ -123,10 +149,11 @@ class CalendarComponent(Component):
             else:
                 row_h = fonts["cal_event"].get_height() + int(rect.height * 0.008)
                 for ev in events:
+                    color = _event_color(ev, now)
                     surface.blit(fonts["cal_event"].render(ev["time"], True, DIM), (x + 8, y_pos))
                     surface.blit(
                         fonts["cal_event"].render(
-                            _truncate(fonts["cal_event"], ev["title"], max_title), True, TEXT
+                            _truncate(fonts["cal_event"], ev["title"], max_title), True, color
                         ),
                         (x + 8 + time_col, y_pos),
                     )
